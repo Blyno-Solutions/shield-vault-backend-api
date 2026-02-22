@@ -1,0 +1,176 @@
+name: Shield Vault PR Check Blyno Solutions
+
+on:
+  pull_request:
+    branches: [ main ]
+  push:
+    branches: [ main ]
+  merge_group:
+    branches: [ main ]
+
+concurrency:
+  group: shield-vault-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: write
+  security-events: write
+
+env:
+  PYTHON_VERSION: "3.11"
+
+jobs:
+
+  # 🔎 Branch Name Validation
+  branch-name:
+    name: 🏷️ Validate Branch Name
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+
+    steps:
+      - name: Validate branch naming convention
+        run: |
+          BRANCH_NAME="${{ github.head_ref }}"
+          echo "Branch: $BRANCH_NAME"
+
+          if [[ ! "$BRANCH_NAME" =~ ^(feature|bugfix|hotfix|chore|docs)/[a-z0-9._-]+$ ]]; then
+            echo "❌ Invalid branch name."
+            exit 1
+          fi
+
+          echo "✅ Branch name valid"
+
+
+  # 🏷️ Auto Label
+  auto-label:
+    name: 🏷️ Auto Label
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+
+    steps:
+      - uses: actions/labeler@v5
+        with:
+          repo-token: "${{ secrets.GITHUB_TOKEN }}"
+
+
+  quality:
+    name: 🔍 Code Quality
+    runs-on: ubuntu-latest
+    needs: branch-name
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install black ruff mypy
+
+      - name: Check Formatting (Black)
+        run: black --check .
+
+      - name: Lint (Ruff)
+        run: ruff check .
+
+      - name: Type Check (Mypy)
+        run: mypy .
+
+
+  test:
+    name: 🧪 Tests
+    runs-on: ubuntu-latest
+    needs: quality
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest pytest-cov
+
+      - name: Run Tests with Coverage
+        run: |
+          pytest --cov=app --cov-report=xml --cov-report=term
+
+      - name: Enforce Coverage ≥ 85%
+        run: |
+          COVERAGE=$(pytest --cov=app --cov-report=term | grep TOTAL | awk '{print $4}' | sed 's/%//')
+          echo "Coverage: $COVERAGE%"
+
+          REQUIRED=85
+          if (( $(echo "$COVERAGE < $REQUIRED" | bc -l) )); then
+            echo "❌ Coverage below ${REQUIRED}%"
+            exit 1
+          fi
+
+      - name: Upload Coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: coverage.xml
+
+
+  security:
+    name: 🔐 Security Scan
+    runs-on: ubuntu-latest
+    needs: quality
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: python
+
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v3
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+
+      - name: Install Security Tools
+        run: |
+          pip install bandit safety
+
+      - name: Run Bandit (SAST)
+        run: bandit -r app -ll
+
+      - name: Run Safety (Dependency Vulnerabilities)
+        run: safety check
+
+
+  pr-report:
+    name: 💬 PR Report
+    runs-on: ubuntu-latest
+    needs: [quality, test, security]
+    if: github.event_name == 'pull_request'
+
+    steps:
+      - name: Comment Summary
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          header: shield-vault-ci
+          message: |
+            ## 🔐 Shield Vault PR Report
+
+            🔍 Code Quality: Passed  
+            🧪 Tests: Passed (≥ 85% coverage)  
+            🔐 Security Scans: Passed  
+
+            Enterprise standards met for Shield Vault API.
+            Awaiting mentor approval 👩‍🏫
