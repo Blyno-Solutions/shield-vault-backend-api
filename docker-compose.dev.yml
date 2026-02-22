@@ -1,0 +1,40 @@
+services:
+  db:
+    image: postgres:15
+    container_name: shield_db
+    restart: always
+    environment:
+      POSTGRES_USER: shield
+      POSTGRES_PASSWORD: shieldpass
+      POSTGRES_DB: shield_vault
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  migrate:
+    build: .
+    container_name: shield_migrate
+    command: >
+      sh -c "/wait-for-db.sh &&
+             alembic upgrade head"
+    depends_on:
+      - db
+    env_file:
+      - .env
+
+  api:
+    build: .
+    container_name: shield_api
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      - migrate
+    env_file:
+      - .env
+
+volumes:
+  postgres_data:
