@@ -1,3 +1,10 @@
+"""
+Security Service Module for AES-256 Encryption.
+
+This module provides enterprise-grade encryption services using Fernet
+(AES-256) with support for password-based key derivation and file operations.
+"""
+
 import os
 import base64
 from cryptography.fernet import Fernet
