@@ -1,6 +1,7 @@
 from pydantic_settings import BaseSettings
 from typing import Optional
 
+
 class Settings(BaseSettings):
     ENVIRONMENT: str = "development"
     SECRET_KEY: str
@@ -9,8 +10,9 @@ class Settings(BaseSettings):
     POSTGRES_USER: str
     POSTGRES_PASSWORD: str
     POSTGRES_DB: str
-    
+
     class Config:
         env_file = ".env"
+
 
 settings = Settings()

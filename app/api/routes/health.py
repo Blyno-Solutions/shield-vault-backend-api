@@ -3,14 +3,15 @@ from datetime import datetime
 
 router = APIRouter(prefix="/health", tags=["Health"])
 
+
 @router.get("/")
 async def health_check():
     """
     Perform a comprehensive health check of the API.
-    
+
     Returns:
         dict: Detailed health status including all service dependencies
-        
+
     Example:
         >>> GET /health/
         {
@@ -24,35 +25,34 @@ async def health_check():
     """
     return {
         "status": "healthy",
-        "services": {
-            "database": "connected",
-            "api": "operational"
-        },
-        "timestamp": datetime.utcnow().isoformat() + "Z"
+        "services": {"database": "connected", "api": "operational"},
+        "timestamp": datetime.utcnow().isoformat() + "Z",
     }
+
 
 @router.get("/ping")
 async def ping():
     """
     Simple ping endpoint for connectivity testing.
-    
+
     Returns:
         dict: Pong response indicating API is reachable
-        
+
     Example:
         >>> GET /health/ping
         {"ping": "pong"}
     """
     return {"ping": "pong"}
 
+
 @router.get("/ready")
 async def readiness_check():
     """
     Readiness probe for container orchestration systems.
-    
+
     Returns:
         dict: Readiness status and component checks
-        
+
     Example:
         >>> GET /health/ready
         {
@@ -62,9 +62,4 @@ async def readiness_check():
             }
         }
     """
-    return {
-        "ready": True,
-        "checks": {
-            "database": "connected"
-        }
-    }
+    return {"ready": True, "checks": {"database": "connected"}}
