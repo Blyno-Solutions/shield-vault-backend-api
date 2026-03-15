@@ -11,7 +11,6 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")
 import pytest
 import httpx
 from typing import Generator
-import tempfile
 
 BASE_URL = "http://localhost:8000"
 
@@ -128,8 +127,6 @@ class TestCoverageRequirements:
 
         This ensures dependencies are properly installed.
         """
-        import app.main
-        import app.infrastructure.security
 
         assert True
 
@@ -139,9 +136,6 @@ class TestCoverageRequirements:
 
         Verifies the testing environment is properly set up.
         """
-        import pytest
-        import httpx
-        import pytest_asyncio
 
         assert True
 

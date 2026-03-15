@@ -1,5 +1,4 @@
 from fastapi import APIRouter, UploadFile, File, HTTPException
-from typing import Optional
 
 router = APIRouter(prefix="/files", tags=["Files"])
 

@@ -1,7 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.api.routes import health, files
-from app.core.config import settings
 
 app = FastAPI(
     title="Shield Vault API",
