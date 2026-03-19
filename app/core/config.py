@@ -3,16 +3,17 @@ from typing import Optional
 
 
 class Settings(BaseSettings):
-    ENVIRONMENT: str = "development"
-    SECRET_KEY: str
-    ENCRYPTION_KEY: Optional[str] = None
     DATABASE_URL: str = "postgresql://postgres:postgres@db:5432/shieldvault"
-    POSTGRES_USER: str
-    POSTGRES_PASSWORD: str
-    POSTGRES_DB: str
+    SECRET_KEY: str = "development-secret-key-change-in-production"
+    ENCRYPTION_KEY: Optional[str] = None
+    POSTGRES_USER: str = "postgres"
+    POSTGRES_PASSWORD: str = "postgres"
+    POSTGRES_DB: str = "shieldvault"
 
     class Config:
         env_file = ".env"
+        case_sensitive = True
+        extra = "ignore"
 
 
 settings = Settings()

@@ -1,11 +1,12 @@
 import sys
 import os
+
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-import pytest
 from fastapi.testclient import TestClient
 from app.main import app
 
 client = TestClient(app)
+
 
 class TestHealthEndpoints:
     def test_health_root(self):
@@ -15,12 +16,12 @@ class TestHealthEndpoints:
         assert data["status"] == "healthy"
         assert "database" in data
         assert data["database"] == "connected"
-    
+
     def test_health_ping(self):
         response = client.get("/health/ping")
         assert response.status_code == 200
         assert response.json() == {"ping": "pong"}
-    
+
     def test_health_ready(self):
         response = client.get("/health/ready")
         assert response.status_code == 200
