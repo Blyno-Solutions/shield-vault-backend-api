@@ -1,7 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-
-from app.api.routes import health
+from app.api.routes import health, file_routes
 
 app = FastAPI(
     title="Shield Vault API",
@@ -12,19 +11,22 @@ app = FastAPI(
     openapi_url="/openapi.json",
 )
 
-# CORS (restrict in production)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # lock this down later
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Include routers
-app.include_router(health.router, prefix="/api/v1", tags=["Health"])
+app.include_router(health.router)
+app.include_router(file_routes.router)
 
 
-@app.get("/", tags=["Root"])
-def root():
-    return {"message": "Shield Vault API is running securely 🔐"}
+@app.get("/")
+async def root():
+    return {
+        "message": "Shield Vault API is running securely 🔐",
+        "version": app.version,
+        "status": "operational",
+    }
