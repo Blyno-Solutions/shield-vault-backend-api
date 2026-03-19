@@ -9,3 +9,9 @@ docs:
 
 chore:
   - head-branch: ['chore/*', 'maintenance/*']
+
+tests:
+  - head-branch: ['test/*', 'testing/*']
+
+security:
+  - head-branch: ['security/*', 'sec/*']
