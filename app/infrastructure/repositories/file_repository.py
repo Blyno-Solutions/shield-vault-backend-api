@@ -66,7 +66,7 @@ class FileRepository:
             check = await self.get_by_id(file_id)
             return check is None
         else:
-            stmt = sqlalchemy_delete(FileModel).where(FileModel.id == file_id) # type: ignore
+            stmt = sqlalchemy_delete(FileModel).where(FileModel.id == file_id)  # type: ignore
             result = await self.db.execute(stmt)  # type: ignore
             await self.db.commit()
             return result.rowcount > 0  # type: ignore
