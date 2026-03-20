@@ -1,3 +1,4 @@
+# Auto-label PRs based on branch names - Updated
 feature:
   - head-branch: ['feature/*', 'feat/*']
 
