@@ -1,8 +1,6 @@
-import sys
-import os
-
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 import pytest
+import os
+import base64
 import tempfile
 from app.infrastructure.security import SecurityService
 
@@ -17,13 +15,13 @@ class TestSecurityService:
         encrypted = self.service.encrypt(self.test_string)
         assert encrypted != self.test_string.encode()
         assert isinstance(encrypted, bytes)
-        decrypted = self.service.decrypt(encrypted)
+        decrypted = self.service.decrypt_to_string(encrypted)
         assert decrypted == self.test_string
 
     def test_encrypt_decrypt_bytes_success(self):
         encrypted = self.service.encrypt(self.test_bytes)
         decrypted = self.service.decrypt(encrypted)
-        assert decrypted == self.test_string
+        assert decrypted == self.test_bytes
 
     def test_empty_string_encryption(self):
         with pytest.raises(ValueError, match="Cannot encrypt empty data"):
@@ -50,7 +48,7 @@ class TestSecurityService:
     def test_corrupted_data_decryption(self):
         encrypted = self.service.encrypt(self.test_string)
         corrupted = bytearray(encrypted)
-        corrupted[10] = corrupted[10] ^ 0xFF
+        corrupted[15] = corrupted[15] ^ 0xFF
         corrupted = bytes(corrupted)
         with pytest.raises(ValueError, match="Decryption failed"):
             self.service.decrypt(corrupted)
@@ -58,13 +56,13 @@ class TestSecurityService:
     def test_very_long_string(self):
         long_string = "A" * 1000000
         encrypted = self.service.encrypt(long_string)
-        decrypted = self.service.decrypt(encrypted)
+        decrypted = self.service.decrypt_to_string(encrypted)
         assert decrypted == long_string
 
     def test_special_characters(self):
         special = "!@#$%^&*()_+{}[]|\\:;\"'<>,.?/~`你好🌍"
         encrypted = self.service.encrypt(special)
-        decrypted = self.service.decrypt(encrypted)
+        decrypted = self.service.decrypt_to_string(encrypted)
         assert decrypted == special
 
     def test_key_validation(self):
@@ -75,14 +73,17 @@ class TestSecurityService:
 
     def test_password_derived_key(self):
         password = "my-secret-password"
-        service = SecurityService.from_password(password)
+        service, salt = SecurityService.from_password(password)
         encrypted = service.encrypt(self.test_string)
-        decrypted = service.decrypt(encrypted)
+        decrypted = service.decrypt_to_string(encrypted)
         assert decrypted == self.test_string
 
+        service2, salt2 = SecurityService.from_password(password, salt)
+        assert service2.key == service.key
+
     def test_file_encryption_decryption(self):
-        with tempfile.NamedTemporaryFile(mode="w", delete=False) as f:
-            f.write(self.test_string)
+        with tempfile.NamedTemporaryFile(mode="wb", delete=False) as f:
+            f.write(self.test_bytes)
             temp_file = f.name
 
         try:
@@ -92,9 +93,9 @@ class TestSecurityService:
             decrypted_file = self.service.decrypt_file(encrypted_file)
             assert os.path.exists(decrypted_file)
 
-            with open(decrypted_file, "r") as f:
+            with open(decrypted_file, "rb") as f:
                 content = f.read()
-            assert content == self.test_string
+            assert content == self.test_bytes
 
             if os.path.exists(encrypted_file):
                 os.unlink(encrypted_file)
@@ -112,6 +113,14 @@ class TestSecurityService:
         key_b64 = self.service.get_key_base64()
         assert isinstance(key_b64, str)
         assert len(key_b64) > 0
+        decoded = base64.urlsafe_b64decode(key_b64)
+        assert len(decoded) == SecurityService.KEY_SIZE
+
+    def test_generate_key(self):
+        key1 = SecurityService.generate_key()
+        key2 = SecurityService.generate_key()
+        assert len(key1) == SecurityService.KEY_SIZE
+        assert key1 != key2
 
 
 class TestSecurityServiceEdgeCases:
@@ -125,7 +134,7 @@ class TestSecurityServiceEdgeCases:
         ]
         for test_string in test_strings:
             encrypted = service.encrypt(test_string)
-            decrypted = service.decrypt(encrypted)
+            decrypted = service.decrypt_to_string(encrypted)
             assert decrypted == test_string
 
     def test_multiple_encryptions_same_data(self):
@@ -134,12 +143,12 @@ class TestSecurityServiceEdgeCases:
         encrypted1 = service.encrypt(data)
         encrypted2 = service.encrypt(data)
         assert encrypted1 != encrypted2
-        assert service.decrypt(encrypted1) == data
-        assert service.decrypt(encrypted2) == data
+        assert service.decrypt_to_string(encrypted1) == data
+        assert service.decrypt_to_string(encrypted2) == data
 
     def test_very_large_data(self):
         service = SecurityService()
         large_data = "X" * 10_000_000
         encrypted = service.encrypt(large_data)
-        decrypted = service.decrypt(encrypted)
+        decrypted = service.decrypt_to_string(encrypted)
         assert decrypted == large_data
