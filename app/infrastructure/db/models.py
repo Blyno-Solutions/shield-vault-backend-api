@@ -1,7 +1,6 @@
-from sqlalchemy import Column, String, Integer, DateTime, LargeBinary
+from sqlalchemy import Column, String, Integer, DateTime, LargeBinary, Boolean
 from sqlalchemy.sql import func
 from app.core.database import Base
-
 
 class File(Base):
     __tablename__ = "files"
@@ -16,4 +15,4 @@ class File(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     expires_at = Column(DateTime(timezone=True), nullable=True)
-    is_deleted = Column(Integer, default=0)
+    is_deleted = Column(Boolean, default=False)

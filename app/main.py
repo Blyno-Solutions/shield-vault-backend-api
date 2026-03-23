@@ -11,20 +11,24 @@ app = FastAPI(
     openapi_url="/openapi.json",
 )
 
+# CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["*"],  # Change to your allowed origins in production
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
+# Include API routers
 app.include_router(health.router)
 app.include_router(file_routes.router)
 
-
-@app.get("/")
+@app.get("/", tags=["Root"])
 async def root():
+    """
+    Root endpoint returning basic API status and version info.
+    """
     return {
         "message": "Shield Vault API is running securely 🔐",
         "version": app.version,
