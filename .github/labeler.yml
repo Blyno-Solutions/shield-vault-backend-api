@@ -1,11 +1,18 @@
+# Auto-label PRs based on branch names - Updated
 feature:
-  - head-branch: ['feature/**']
+  - head-branch: ['feature/*', 'feat/*']
 
 bug:
-  - head-branch: ['bugfix/**']
+  - head-branch: ['bugfix/*', 'bug/*', 'fix/*']
 
 docs:
-  - head-branch: ['docs/**']
+  - head-branch: ['docs/*', 'documentation/*']
 
 chore:
-  - head-branch: ['chore/**']
+  - head-branch: ['chore/*', 'maintenance/*']
+
+tests:
+  - head-branch: ['test/*', 'testing/*']
+
+security:
+  - head-branch: ['security/*', 'sec/*']
