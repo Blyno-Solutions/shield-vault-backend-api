@@ -30,7 +30,7 @@ jobs:
         run: |
           BRANCH_NAME="${{ github.head_ref }}"
           echo "Branch: $BRANCH_NAME"
-          if [[ ! "$BRANCH_NAME" =~ ^(feature|bugfix|hotfix|chore|docs)/[a-z0-9._-]+$ ]]; then
+          if [[ ! "$BRANCH_NAME" =~ ^(feature|bugfix|hotfix|chore|docs|test|security)/[a-z0-9._-]+$ ]]; then
             echo "❌ Invalid branch name."
             exit 1
           fi
@@ -87,16 +87,7 @@ jobs:
           pip install -r requirements.txt
           pip install pytest pytest-cov
       - name: Run Tests with Coverage
-        run: pytest --cov=app --cov-report=xml --cov-report=term
-      - name: Enforce Coverage ≥ 85%
-        run: |
-          COVERAGE=$(pytest --cov=app --cov-report=term | grep TOTAL | awk '{print $4}' | sed 's/%//')
-          echo "Coverage: $COVERAGE%"
-          REQUIRED=85
-          if (( $(echo "$COVERAGE < $REQUIRED" | bc -l) )); then
-            echo "❌ Coverage below ${REQUIRED}%"
-            exit 1
-          fi
+        run: pytest --cov=app --cov-report=xml --cov-report=term --cov-fail-under=85
       - name: Upload Coverage
         uses: actions/upload-artifact@v4
         with:
